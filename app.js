@@ -105,6 +105,42 @@ app.get('/get-token', async (req, res) => {
     //console.log('==============================================')
 })
 
+app.get('/refresh-token', async (req, res) => {
+    const refresh_token = req.query.refresh_token || null
+    const auth_string = Buffer.from(`${client_id}:${client_secret}`).toString(
+        'base64'
+    )
+
+    res.append('Access-Control-Allow-Origin', 'http://localhost:3000')
+
+    const body = new URLSearchParams()
+    body.append('grant_type', 'refresh_token')
+    body.append('refresh_token', refresh_token)
+
+    const data = await axios({
+        method: 'post',
+        url: 'https://accounts.spotify.com/api/token',
+        headers: {
+            Authorization: `Basic ${auth_string}`,
+            'Content-type': 'application/x-www-form-urlencoded',
+        },
+        data: body,
+    })
+        .then((response) => {
+            res.status(200).send({ ...response.data })
+            return { ...response.data }
+        })
+        .catch((err) => {
+            if (err.response) {
+                res.status(res.response.status).send({ ...err.response.data })
+
+                return { ...err.response.data }
+            }
+
+            return { ...err }
+        })
+})
+
 app.listen(port, () => {
     console.log(`janitors-closet running and listening on port ${port}`)
 })
